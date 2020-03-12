@@ -1,0 +1,29 @@
+#!/bin/sh
+# It locks screensavers if DM/WM is running
+# Common usage: add to udev rules for locking a session on usb disconnect
+#
+# Copyright (C) 2020 Mikhail f. Shiryaev
+# License: MIT
+
+PATH=$PATH:/bin:/usr/bin
+export PATH
+
+# You could uncomment the following line for debugging
+# exec 1>>/var/log/xlocker.log 2>&1
+
+lockScreen() {
+  case $1 in
+    xscreensaver ) sudo -u "$user" xscreensaver-command -lock &
+      ;;
+    i3 ) sudo -u "$user" i3lock &
+      ;;
+  esac
+}
+
+for s in xscreensaver i3 ; do
+  procs=$(pgrep -x $s) || continue
+  for proc in $procs; do
+    user=$(stat -c %U /proc/"$proc") || continue
+    lockScreen $s
+  done
+done
